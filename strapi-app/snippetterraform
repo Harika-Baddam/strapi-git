@@ -1,0 +1,20 @@
+variable "image_tag" {}
+variable "aws_key_name" {}
+variable "aws_region" {}
+
+resource "aws_instance" "strapi" {
+  ami           = "ami-xxxxxx" // Use Ubuntu or Amazon Linux
+  instance_type = "t3.micro"
+  key_name      = var.aws_key_name
+
+  user_data = <<-EOF
+    #!/bin/bash
+    sudo apt update
+    sudo apt install -y docker.io
+    sudo docker run -d -p 80:1337 <your_ecr_repo>:${image_tag}
+  EOF
+
+  tags = {
+    Name = "StrapiInstance"
+  }
+}
