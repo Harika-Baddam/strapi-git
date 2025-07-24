@@ -1,32 +1,92 @@
-name: CD - Deploy Strapi with Terraform
+name: "Create Infrastructure Branch Based Deployment"
 
 on:
   workflow_dispatch:
     inputs:
-      image_tag:
-        description: 'Docker image tag to deploy'
-        required: true
+      brand_name:
+        type: choice
+        description: "Select the brand name"
+        options:
+          - AWS
+      environment_name:
+        type: choice
+        description: "Select the environment name"
+        options:
+          - prod
+      resource:
+        type: choice
+        description: "Select the resources name"
+        options:
+          - ec2-instance
+      tf_function:
+        type: choice
+        description: "infrastructure planning / deployment"
+        options:
+          - plan
+          - apply
+          - destroy
+
+env:
+  TERRAFORM_VERSION: 1.8.5
+  TERRAGRUNT_VERSION: v0.59.4
+  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
 jobs:
-  deploy:
+  terragrunt-apply:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Set resource_env based on selected brand
+        id: set-env
+        run: |
+          case "${{ inputs.brand_name }}" in
+            "AWS")
+              echo "resource_env=aws" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "resource_env=unknown" >> $GITHUB_ENV
+              ;;
+          esac
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Terraform Init
-      run: terraform init
+      - name: Configure AWS Credentials
+        id: aws_creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets[format('{0}_ACCESS_KEY_ID', inputs.brand_name)] }}
+          aws-secret-access-key: ${{ secrets[format('{0}_SECRET_ACCESS_KEY', inputs.brand_name)] }}
+          aws-region: us-east-2
 
-    - name: Terraform Plan
-      run: terraform plan -var="image_tag=${{ github.event.inputs.image_tag }}"
+      - name: Set tg path
+        id: set-folder
+        run: |
+          echo "tg_dir=iac/terragrunt/${{ env.resource_env }}/${{ inputs.environment_name }}/${{ inputs.resource }}" >> $GITHUB_ENV
 
-    - name: Terraform Apply
-      run: terraform apply -var="image_tag=${{ github.event.inputs.image_tag }}" -auto-approve
+      - name: Terraform Plan
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.TERRAFORM_VERSION }}
+          tg_version: ${{ env.TERRAGRUNT_VERSION }}
+          tg_dir: ${{ env.tg_dir }}
+          tg_command: 'plan'
+        id: terraform-plan
 
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Deploy
+        if: inputs.tf_function == 'apply'
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.TERRAFORM_VERSION }}
+          tg_version: ${{ env.TERRAGRUNT_VERSION }}
+          tg_dir: ${{ env.tg_dir }}
+          tg_command: 'apply'
+
+      - name: Destroy
+        if: inputs.tf_function == 'destroy'
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.TERRAFORM_VERSION }}
+          tg_version: ${{ env.TERRAGRUNT_VERSION }}
+          tg_dir: ${{ env.tg_dir }}
+          tg_command: 'destroy'    
