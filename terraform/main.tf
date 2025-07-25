@@ -3,7 +3,7 @@ provider "aws" {
 }
  
 resource "aws_security_group" "strapi_sg" {
-  name        = "strapi-sg-balaji"
+  name        = "strapi-sg-hrk"
   description = "Allows SSH and Strapi Access"
  
   ingress {
@@ -26,8 +26,8 @@ resource "aws_security_group" "strapi_sg" {
   }
  
   tags = {
-    Name  = "Strapi_Instance(Balaji)"
-    Owner = "Balaji"
+    Name  = "Strapi_Instance(hrk)"
+    Owner = "hrk"
   }
 }
  
@@ -47,8 +47,8 @@ resource "aws_instance" "strapi" {
   })
  
   tags = {
-    Name  = "Strapi_Instance(Balaji)"
-    Owner = "Balaji"
+    Name  = "Strapi_Instance(hrk)"
+    Owner = "hrk"
   }
 }
  
@@ -71,7 +71,7 @@ variable "ami_id" {
 variable "ssh_key_name" {
   description = "SSH key name"
   type        = string
-  default     = "strapi_key_balaji" #Create own keypair to have SSH access
+  default     = "hrk-strapikey" #Create own keypair to have SSH access
 }
  
 variable "image_tag" {
