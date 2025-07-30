@@ -3,7 +3,7 @@ provider "aws" {
 }
  
 resource "aws_security_group" "strapi_sg" {
-  name        = "strapi-sg-hrk"
+  name        = "strapi-sg-bhr"
   description = "Allows SSH and Strapi Access"
  
   ingress {
