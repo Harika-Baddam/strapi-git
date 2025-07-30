@@ -1,1 +1,1 @@
-strapi-v3
+strapi-v4
