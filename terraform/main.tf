@@ -3,7 +3,7 @@ provider "aws" {
 }
  
 resource "aws_security_group" "strapi_sg" {
-  name        = "strapi-sg-bhr"
+  name        = "strapi-sg-shr"
   description = "Allows SSH and Strapi Access"
  
   ingress {
@@ -26,8 +26,8 @@ resource "aws_security_group" "strapi_sg" {
   }
  
   tags = {
-    Name  = "Strapi_Instance(hrk)"
-    Owner = "hrk"
+    Name  = "Strapi_Instance(shr)"
+    Owner = "shr"
   }
 }
  
@@ -47,8 +47,8 @@ resource "aws_instance" "strapi" {
   })
  
   tags = {
-    Name  = "Strapi_Instance(hrk)"
-    Owner = "hrk"
+    Name  = "Strapi_Instance(shr)"
+    Owner = "shr"
   }
 }
  
